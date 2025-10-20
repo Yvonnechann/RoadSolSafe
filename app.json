@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "RoadSolSafe",
+    "slug": "roadsolsafe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1F2328"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.roadsolsafe.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs location access to track your driving behavior and calculate safety scores.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs location access to track your driving behavior and calculate safety scores.",
+        "NSMotionUsageDescription": "This app uses motion sensors to detect driving behavior and improve safety scoring.",
+        "UIBackgroundModes": ["location", "background-processing"]
+      }
+    },
+    "android": {
+      "package": "com.roadsolsafe.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "POST_NOTIFICATIONS",
+        "WAKE_LOCK"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/logo.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "This app needs location access to track your driving behavior and calculate safety scores."
+        }
+      ]
+    ]
+  }
+}
