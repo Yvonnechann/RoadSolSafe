@@ -6,7 +6,7 @@ A mobile app for incentivizing safer, low-risk driving by issuing cryptocurrency
 
 ### Core Functionality
 - **Safety Scoring**: Real-time calculation based on driving behavior (GPS, IMU, interaction signals)
-- **Token Rewards**: Weekly claimable SPL tokens and milestone NFTs
+- **Token Rewards**: Weekly claimable USDT and milestone NFTs
 - **Navigation Integration**: Deep links to Waze, Google Maps, and Apple Maps
 - **Quest System**: Daily and weekly challenges for gamified safety
 - **Social Features**: Friend connections, leaderboards, and activity sharing
