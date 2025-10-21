@@ -211,4 +211,5 @@ const styles = StyleSheet.create({
   },
   buttonTextError: {
     color: '#FFFFFF',
-  }
+  },
+});

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
+import MapView, { Marker, Polyline } from "react-native-maps";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -20,6 +21,20 @@ interface TripData {
   points: number;
   duration: string;
   distance: string;
+  origin: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  destination: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  route: Array<{
+    latitude: number;
+    longitude: number;
+  }>;
   events: {
     hardBrake: number;
     hardAccel: number;
@@ -59,11 +74,83 @@ export default function TripSummaryModal({ visible, onClose, tripData }: Props) 
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Trip Summary Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Trip Summary</Text>
+          {/* Route Map */}
+          <View style={styles.mapSection}>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: (tripData.origin.latitude + tripData.destination.latitude) / 2,
+                longitude: (tripData.origin.longitude + tripData.destination.longitude) / 2,
+                latitudeDelta: 0.02,
+                longitudeDelta: 0.02,
+              }}
+              showsUserLocation={false}
+              showsMyLocationButton={false}
+              showsCompass={false}
+              showsScale={false}
+              mapType="standard"
+            >
+              {/* Origin Marker */}
+              <Marker
+                coordinate={{
+                  latitude: tripData.origin.latitude,
+                  longitude: tripData.origin.longitude,
+                }}
+                title="Origin"
+                description={tripData.origin.address}
+              >
+                <View style={styles.originMarker}>
+                  <Ionicons name="location" size={16} color="#FFFFFF" />
+                </View>
+              </Marker>
+
+              {/* Destination Marker */}
+              <Marker
+                coordinate={{
+                  latitude: tripData.destination.latitude,
+                  longitude: tripData.destination.longitude,
+                }}
+                title="Destination"
+                description={tripData.destination.address}
+              >
+                <View style={styles.destinationMarker}>
+                  <Ionicons name="flag" size={16} color="#FFFFFF" />
+                </View>
+              </Marker>
+
+              {/* Route Polyline */}
+              {tripData.route.length > 1 && (
+                <Polyline
+                  coordinates={tripData.route}
+                  strokeColor="#2D82FF"
+                  strokeWidth={4}
+                  lineDashPattern={[5, 5]}
+                />
+              )}
+            </MapView>
+          </View>
+
+          {/* Origin and Destination Addresses */}
+          <View style={styles.addressSection}>
+            <View style={styles.addressItem}>
+              <View style={styles.addressIcon}>
+                <View style={styles.originDot} />
+              </View>
+              <Text style={styles.addressText}>{tripData.origin.address}</Text>
+            </View>
             
-            {/* Performance Metrics */}
+            <View style={styles.addressConnector} />
+            
+            <View style={styles.addressItem}>
+              <View style={styles.addressIcon}>
+                <View style={styles.destinationDot} />
+              </View>
+              <Text style={styles.addressText}>{tripData.destination.address}</Text>
+            </View>
+          </View>
+
+          {/* Performance Metrics */}
+          <View style={styles.section}>
             <View style={styles.metricsContainer}>
               {/* First Row */}
               <View style={styles.metricsRow}>
@@ -198,6 +285,95 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  
+  mapSection: {
+    height: 200,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  map: {
+    flex: 1,
+  },
+  
+  originMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2D82FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  
+  destinationMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FF3B30',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  
+  addressSection: {
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  addressItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  
+  addressIcon: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  
+  originDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#666666',
+  },
+  
+  destinationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#666666',
+  },
+  
+  addressConnector: {
+    width: 1,
+    height: 12,
+    backgroundColor: '#666666',
+    marginLeft: 4,
+    marginVertical: 2,
+  },
+  
+  addressText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
   },
   
   section: {

@@ -7,6 +7,7 @@ import {
   Dimensions,
   Alert,
   Linking,
+  TextInput,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -43,8 +44,8 @@ export const MapScreen: React.FC = () => {
     route: [],
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
 
   // Mock current location (in real app, this would come from GPS)
   const currentLocation = {
@@ -159,21 +160,37 @@ export const MapScreen: React.FC = () => {
         )}
       </MapView>
 
-      {/* Top Search Bar */}
-      <View style={styles.topBar}>
-        <Card style={styles.searchCard}>
-          <TouchableOpacity
-            style={styles.searchInput}
-            onPress={() => setShowSearch(true)}
-          >
-            <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
-            <Text style={styles.searchPlaceholder}>
-              {searchQuery || 'Search destination...'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navigateButton} onPress={handleNavigate}>
-            <Ionicons name="navigate" size={20} color={theme.colors.primary} />
-          </TouchableOpacity>
+
+      {/* Origin and Destination Input Fields */}
+      <View style={styles.addressFields}>
+        <Card style={styles.addressCard}>
+          <View style={styles.addressItem}>
+            <View style={styles.addressIcon}>
+              <View style={styles.originDot} />
+            </View>
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Enter origin address..."
+              placeholderTextColor={theme.colors.textSecondary}
+              value={origin}
+              onChangeText={setOrigin}
+            />
+          </View>
+          
+          <View style={styles.addressConnector} />
+          
+          <View style={styles.addressItem}>
+            <View style={styles.addressIcon}>
+              <View style={styles.destinationDot} />
+            </View>
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Enter destination address..."
+              placeholderTextColor={theme.colors.textSecondary}
+              value={destination}
+              onChangeText={setDestination}
+            />
+          </View>
         </Card>
       </View>
 
@@ -213,60 +230,7 @@ export const MapScreen: React.FC = () => {
         />
       </View>
 
-      {/* Bottom Info Panel */}
-      <View style={styles.bottomPanel}>
-        <Card style={styles.infoCard}>
-          <View style={styles.infoHeader}>
-            <Text style={styles.infoTitle}>Drive Status</Text>
-            <View style={styles.statusIndicator}>
-              <View style={[
-                styles.statusDot,
-                { backgroundColor: tripData.isActive ? theme.colors.success : theme.colors.textSecondary }
-              ]} />
-              <Text style={styles.statusText}>
-                {tripData.isActive ? 'Active' : 'Ready'}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.infoStats}>
-            <View style={styles.infoStat}>
-              <Text style={styles.infoStatValue}>{tripData.distance.toFixed(1)}</Text>
-              <Text style={styles.infoStatLabel}>km</Text>
-            </View>
-            <View style={styles.infoStat}>
-              <Text style={styles.infoStatValue}>{formatDuration(tripData.duration)}</Text>
-              <Text style={styles.infoStatLabel}>duration</Text>
-            </View>
-            <View style={styles.infoStat}>
-              <Text style={styles.infoStatValue}>8.7</Text>
-              <Text style={styles.infoStatLabel}>avg score</Text>
-            </View>
-          </View>
-
-          {!tripData.isActive && (
-            <TouchableOpacity style={styles.navigateButtonLarge} onPress={handleNavigate}>
-              <Ionicons name="navigate" size={24} color="#FFFFFF" />
-              <Text style={styles.navigateButtonText}>Start Navigation</Text>
-            </TouchableOpacity>
-          )}
-        </Card>
-      </View>
-
-      {/* Safety Tips */}
-      <View style={styles.safetyTips}>
-        <Card style={styles.tipsCard}>
-          <View style={styles.tipsHeader}>
-            <Ionicons name="shield-checkmark" size={20} color={theme.colors.success} />
-            <Text style={styles.tipsTitle}>Safety Tips</Text>
-          </View>
-          <Text style={styles.tipsText}>
-            • Keep your phone mounted and hands-free{'\n'}
-            • Follow speed limits and traffic signs{'\n'}
-            • Maintain safe following distances
-          </Text>
-        </Card>
-      </View>
     </>
   );
 };
@@ -286,40 +250,62 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Top bar styles
-  topBar: {
+
+  // Address fields styles
+  addressFields: {
     position: 'absolute',
     top: 70,
     left: theme.spacing.lg,
     right: theme.spacing.lg,
     zIndex: 1000,
   },
-  searchCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  addressCard: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
   },
-  searchInput: {
-    flex: 1,
+  addressItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
+    marginVertical: theme.spacing.xs,
   },
-  searchPlaceholder: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.base,
-    marginLeft: theme.spacing.sm,
+  addressIcon: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.sm,
   },
-  navigateButton: {
-    padding: theme.spacing.sm,
-    marginLeft: theme.spacing.sm,
+  originDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#666666',
+  },
+  destinationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#666666',
+  },
+  addressConnector: {
+    width: 1,
+    height: 12,
+    backgroundColor: '#666666',
+    marginLeft: 4,
+    marginVertical: 2,
+  },
+  addressInput: {
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    flex: 1,
+    paddingVertical: theme.spacing.xs,
   },
 
   // Trip banner styles
   tripBanner: {
     position: 'absolute',
-    top: 120,
+    top: 140,
     left: theme.spacing.lg,
     right: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
@@ -369,7 +355,7 @@ const styles = StyleSheet.create({
   // Start/Stop button styles
   startStopContainer: {
     position: 'absolute',
-    bottom: 200,
+    bottom: 100,
     left: '50%',
     marginLeft: -40,
     zIndex: 1000,
@@ -388,103 +374,5 @@ const styles = StyleSheet.create({
     ...theme.shadows.md,
   },
 
-  // Bottom panel styles
-  bottomPanel: {
-    position: 'absolute',
-    bottom: 120,
-    left: theme.spacing.lg,
-    right: theme.spacing.lg,
-    zIndex: 1000,
-  },
-  infoCard: {
-    padding: theme.spacing.lg,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  infoTitle: {
-    color: theme.colors.text,
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: theme.spacing.xs,
-  },
-  statusText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  infoStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: theme.spacing.lg,
-  },
-  infoStat: {
-    alignItems: 'center',
-  },
-  infoStatValue: {
-    color: theme.colors.text,
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
-  },
-  infoStatLabel: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  navigateButtonLarge: {
-    backgroundColor: theme.colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.borderRadius.lg,
-    ...theme.shadows.md,
-  },
-  navigateButtonText: {
-    color: '#FFFFFF',
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-    marginLeft: theme.spacing.sm,
-  },
 
-  // Safety tips styles
-  safetyTips: {
-    position: 'absolute',
-    bottom: 20,
-    left: theme.spacing.lg,
-    right: theme.spacing.lg,
-    zIndex: 1000,
-  },
-  tipsCard: {
-    padding: theme.spacing.md,
-  },
-  tipsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  tipsTitle: {
-    color: theme.colors.text,
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-    marginLeft: theme.spacing.sm,
-  },
-  tipsText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: theme.typography.lineHeight.relaxed,
-  },
 });
