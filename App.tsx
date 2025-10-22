@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OnboardingFlow } from './src/screens/OnboardingFlow';
 import ProfileScreen from './src/screens/ProfileScreen';
 import { QuestsScreen } from './src/screens/QuestsScreen';
-import { MapScreen } from './src/screens/MapScreen';
+import WalletScreen from './src/screens/WalletScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { SocialsScreen } from './src/screens/SocialsScreen';
 import { CustomTabBar } from './src/components/CustomTabBar';
@@ -78,6 +78,7 @@ export default function App() {
     >
       <SafeAreaProvider style={{ backgroundColor: 'transparent', flex: 1 }}>
         <NavigationContainer theme={{ 
+          dark: true,
           colors: { 
             background: 'transparent',
             primary: '#2D82FF',
@@ -95,7 +96,7 @@ export default function App() {
           }}
         >
           <Tab.Screen name="Quests" component={QuestsScreen} />
-          <Tab.Screen name="Maps" component={MapScreen} />
+          <Tab.Screen name="Wallet" component={WalletScreen} />
           <Tab.Screen name="Home" component={ProfileScreen} />
           <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
           <Tab.Screen name="Friends" component={SocialsScreen} />

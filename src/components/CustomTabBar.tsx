@@ -44,8 +44,8 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
           switch (routeName) {
             case 'Quests':
               return focused ? 'trophy' : 'trophy-outline';
-            case 'Maps':
-              return focused ? 'map' : 'map-outline';
+            case 'Wallet':
+              return focused ? 'wallet' : 'wallet-outline';
             case 'Home':
               return focused ? 'home' : 'home-outline';
             case 'Leaderboard':

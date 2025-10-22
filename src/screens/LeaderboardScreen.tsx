@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   // Header styles
   headerContent: {
     alignItems: 'center',
-    paddingTop: theme.spacing['6xl'],
+    paddingTop: 50,
     paddingBottom: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
   },

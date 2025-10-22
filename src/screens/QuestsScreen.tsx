@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card, ProgressBar, Badge } from '../components/Card';
 import { Button } from '../components/Button';
 import { theme } from '../styles/theme';
+import GradientText from '../components/GradientText';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -37,10 +38,10 @@ export const QuestsScreen: React.FC = () => {
       id: '1',
       title: 'Smooth Operator',
       description: 'Complete 2 trips with safety score ≥ 8.0',
-      icon: 'car-sport',
+      icon: 'shield',
       progress: 1,
       target: 2,
-      reward: '+10 pts',
+      reward: '+10',
       rewardType: 'points',
       completed: false,
       claimed: false,
@@ -51,11 +52,11 @@ export const QuestsScreen: React.FC = () => {
       title: 'Route Explorer',
       description: '1 trip with ≥ 20% distance on new tiles',
       icon: 'map',
-      progress: 0,
+      progress: 1,
       target: 1,
-      reward: '+10 pts',
+      reward: '+10',
       rewardType: 'points',
-      completed: false,
+      completed: true,
       claimed: false,
       category: 'daily',
     },
@@ -66,7 +67,7 @@ export const QuestsScreen: React.FC = () => {
       icon: 'speedometer',
       progress: 0.6,
       target: 1,
-      reward: '+10 pts',
+      reward: '+10',
       rewardType: 'points',
       completed: false,
       claimed: false,
@@ -82,7 +83,7 @@ export const QuestsScreen: React.FC = () => {
       icon: 'trophy',
       progress: 7,
       target: 10,
-      reward: '+50 pts',
+      reward: '+50',
       rewardType: 'points',
       completed: false,
       claimed: false,
@@ -95,8 +96,8 @@ export const QuestsScreen: React.FC = () => {
       icon: 'location',
       progress: 3,
       target: 5,
-      reward: '2x Multiplier',
-      rewardType: 'multiplier',
+      reward: '+50',
+      rewardType: 'points',
       completed: false,
       claimed: false,
       category: 'weekly',
@@ -108,21 +109,8 @@ export const QuestsScreen: React.FC = () => {
       icon: 'leaf',
       progress: 2,
       target: 5,
-      reward: 'Eco NFT',
-      rewardType: 'nft',
-      completed: false,
-      claimed: false,
-      category: 'weekly',
-    },
-    {
-      id: '7',
-      title: 'Safety Streak',
-      description: '30 consecutive days with score ≥ 8.0',
-      icon: 'flame',
-      progress: 12,
-      target: 30,
-      reward: 'Streak NFT',
-      rewardType: 'nft',
+      reward: '+50',
+      rewardType: 'points',
       completed: false,
       claimed: false,
       category: 'weekly',
@@ -153,87 +141,95 @@ export const QuestsScreen: React.FC = () => {
     const canClaim = isCompleted && !quest.claimed;
 
     return (
-      <Card style={styles.questCard}>
+      <View style={[
+        styles.questCard,
+        isCompleted ? styles.questCardCompleted : styles.questCardIncomplete
+      ]}>
         <View style={styles.questHeader}>
           <View style={styles.questIconContainer}>
             <Ionicons 
-              name={quest.icon} 
+              name={isCompleted ? 'checkmark-circle' : quest.icon} 
               size={24} 
-              color={isCompleted ? theme.colors.success : theme.colors.text} 
+              color={isCompleted ? '#FFFFFF' : theme.colors.text} 
             />
           </View>
           <View style={styles.questInfo}>
             <Text style={styles.questTitle}>{quest.title}</Text>
             <Text style={styles.questDescription}>{quest.description}</Text>
+            <View style={styles.streakContainer}>
+              <Ionicons name="flame" size={16} color="#FF6B35" />
+              <Text style={styles.streakText}>{Math.floor(Math.random() * 5) + 1} day streak</Text>
+            </View>
           </View>
           <View style={styles.questReward}>
-            <Badge 
-              variant={quest.rewardType === 'nft' ? 'gold' : 'default'} 
-              size="sm"
-            >
-              <Text style={[
-                styles.rewardText,
-                { color: quest.rewardType === 'nft' ? '#000000' : theme.colors.text }
-              ]}>
-                {quest.reward}
-              </Text>
-            </Badge>
+            <Text style={styles.rewardPoints}>{quest.reward}</Text>
+            <Text style={styles.rewardLabel}>points</Text>
           </View>
         </View>
 
         <View style={styles.questProgress}>
-          <View style={styles.progressInfo}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>Progress</Text>
             <Text style={styles.progressText}>
-              {quest.progress}/{quest.target}
-            </Text>
-            <Text style={styles.progressPercentage}>
-              {Math.round(progressPercentage * 100)}%
+              {Math.round(quest.progress)}/{quest.target}
             </Text>
           </View>
-          <ProgressBar
-            progress={progressPercentage}
-            color={getProgressColor(quest.progress, quest.target)}
-            backgroundColor={theme.colors.surface}
-            height={6}
-          />
+          {isCompleted && (
+            <View style={styles.completedContainer}>
+              <Text style={styles.completedText}>Completed!</Text>
+            </View>
+          )}
+          <View style={styles.progressBarContainer}>
+            <View style={[
+              styles.progressBar,
+              { 
+                width: `${Math.min((quest.progress / quest.target) * 100, 100)}%`,
+              }
+            ]}>
+              <LinearGradient
+                colors={isCompleted ? ['#00FF00', '#32CD32'] : ['#FFD700', '#FFA500']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.progressBarGradient}
+              />
+            </View>
+          </View>
         </View>
-
-        {canClaim && (
-          <Button
-            title="Claim Reward"
-            onPress={() => {}}
-            variant="success"
-            size="sm"
-            icon="gift"
-            style={styles.claimButton}
-          />
-        )}
-
-        {quest.claimed && (
-          <View style={styles.claimedBadge}>
-            <Ionicons name="checkmark-circle" size={16} color={theme.colors.success} />
-            <Text style={styles.claimedText}>Claimed</Text>
-          </View>
-        )}
-      </Card>
+      </View>
     );
   };
 
   return (
     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header with Stats */}
+        {/* Header */}
         <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Quests</Text>
+          <Text style={styles.headerSubtitle}>Complete challenges to earn rewards</Text>
+          
+          {/* Header with Stats */}
           <View style={styles.headerStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>3</Text>
-              <Text style={styles.statLabel}>Daily</Text>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="star" size={20} color="#FFD700" />
+              </View>
+              <GradientText
+                colors={['#FFD700', '#FFA500', '#FFD700']}
+                textStyle={styles.statValue}
+              >
+                1,250
+              </GradientText>
+              <Text style={styles.statLabel}>Points</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>4</Text>
-              <Text style={styles.statLabel}>Weekly</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="flame" size={20} color="#FF6B35" />
+              </View>
+              <GradientText
+                colors={['#FF6B35', '#FF4500', '#FF6B35']}
+                textStyle={styles.statValue}
+              >
+                12
+              </GradientText>
               <Text style={styles.statLabel}>Streak</Text>
             </View>
           </View>
@@ -281,17 +277,6 @@ export const QuestsScreen: React.FC = () => {
           <QuestCard key={quest.id} quest={quest} />
         ))}
       </ScrollView>
-
-      {/* Bottom Info */}
-      <Card style={styles.bottomInfo}>
-        <View style={styles.bottomInfoContent}>
-          <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-          <Text style={styles.bottomInfoText}>
-            Complete quests to earn points and unlock special rewards. 
-            Daily quests reset every 24 hours.
-          </Text>
-        </View>
-      </Card>
     </ScrollView>
   );
 };
@@ -315,28 +300,56 @@ const styles = StyleSheet.create({
   // Header styles
   headerContent: {
     alignItems: 'center',
-    paddingTop: theme.spacing['6xl'],
+    paddingTop: 50,
     paddingBottom: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
+  },
+  headerTitle: {
+    fontSize: theme.typography.fontSize['3xl'],
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
   },
   headerStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    width: '100%',
-  },
-  statItem: {
     alignItems: 'center',
+    width: '100%',
+    marginBottom: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    marginHorizontal: theme.spacing.xs,
+  },
+  statIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
   },
   statValue: {
-    color: theme.colors.text,
-    fontSize: theme.typography.fontSize['2xl'],
+    fontSize: 38,
     fontWeight: theme.typography.fontWeight.bold,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
   },
   statLabel: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.medium,
-    marginTop: theme.spacing.xs,
   },
 
   // Tab styles
@@ -345,6 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     marginHorizontal: theme.spacing.lg,
     marginTop: -theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xs,
     ...theme.shadows.md,
@@ -373,11 +387,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   questsListContent: {
-    paddingTop: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.xl,
   },
   questCard: {
     marginBottom: theme.spacing.lg,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  questCardIncomplete: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  questCardCompleted: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   questHeader: {
     flexDirection: 'row',
@@ -388,7 +418,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.md,
@@ -397,75 +427,82 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   questTitle: {
-    color: theme.colors.text,
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-    marginBottom: theme.spacing.xs,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   questDescription: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: theme.typography.lineHeight.relaxed,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  streakText: {
+    color: '#FF6B35',
+    fontSize: 10,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   questReward: {
-    marginLeft: theme.spacing.sm,
+    alignItems: 'flex-end',
   },
-  rewardText: {
-    fontSize: theme.typography.fontSize.xs,
-    fontWeight: theme.typography.fontWeight.bold,
+  rewardPoints: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  rewardLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 10,
+    fontWeight: '500',
   },
   questProgress: {
-    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.md,
   },
-  progressInfo: {
+  progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 6,
+  },
+  progressLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
   },
   progressText: {
-    color: theme.colors.text,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
   },
-  progressPercentage: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+  completedContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 6,
   },
-  claimButton: {
-    marginTop: theme.spacing.sm,
+  completedText: {
+    color: '#00FF00',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  claimedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: 'rgba(50, 205, 50, 0.1)',
-    borderRadius: theme.borderRadius.md,
+  progressBarContainer: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 2,
+    marginTop: 8,
+    overflow: 'hidden',
   },
-  claimedText: {
-    color: theme.colors.success,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.semibold,
-    marginLeft: theme.spacing.xs,
+  progressBar: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressBarGradient: {
+    flex: 1,
+    borderRadius: 2,
   },
 
-  // Bottom info styles
-  bottomInfo: {
-    margin: theme.spacing.lg,
-    marginTop: 0,
-  },
-  bottomInfoContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bottomInfoText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: theme.typography.lineHeight.relaxed,
-    marginLeft: theme.spacing.sm,
-    flex: 1,
-  },
 });

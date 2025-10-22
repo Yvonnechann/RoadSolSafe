@@ -40,14 +40,7 @@ export const Card: React.FC<CardProps> = ({
   if (variant === 'glass') {
     return (
       <View style={[getCardStyle(), style]}>
-        <LinearGradient
-          colors={[theme.colors.glass, 'rgba(255, 255, 255, 0.05)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientCard}
-        >
-          {children}
-        </LinearGradient>
+        {children}
       </View>
     );
   }
@@ -215,36 +208,48 @@ export const Badge: React.FC<BadgeProps> = ({
 const styles = StyleSheet.create({
   // Card styles
   card: {
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   cardDefault: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000000',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 8,
   },
   cardGlass: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cardElevated: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    shadowColor: '#000000',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 10,
   },
   cardOutlined: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   padding_sm: {
     padding: theme.spacing.sm,
@@ -254,10 +259,6 @@ const styles = StyleSheet.create({
   },
   padding_lg: {
     padding: theme.spacing.lg,
-  },
-  gradientCard: {
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
   },
 
   // Safety Score Gauge styles

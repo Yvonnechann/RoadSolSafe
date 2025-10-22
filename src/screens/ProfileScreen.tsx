@@ -1,10 +1,13 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, TextInput, Linking, Alert } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import * as Location from 'expo-location';
 import SafetyCluster from "../components/SafetyCluster";
 import StartTripButtonShiny from "../components/StartTripButtonShiny";
 import TripMonitoringModal from "../components/TripMonitoringModal";
 import TripSummaryModal from "../components/TripSummaryModal";
+import { theme } from "../styles/theme";
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -16,6 +19,34 @@ export default function ProfileScreen() {
   const [showTripModal, setShowTripModal] = useState(false);
   const [showTripSummary, setShowTripSummary] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState(null);
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+  const [isTripActive, setIsTripActive] = useState(false);
+  
+  // Map and location states
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [originCoords, setOriginCoords] = useState(null);
+  const [destinationCoords, setDestinationCoords] = useState(null);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 3.1390, // Kuala Lumpur coordinates as default
+    longitude: 101.6869,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
+
+  // Search states
+  const [originSuggestions, setOriginSuggestions] = useState([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState([]);
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
+  const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+  const [selectedOrigin, setSelectedOrigin] = useState(null);
+  const [selectedDestination, setSelectedDestination] = useState(null);
+  
+  // Debouncing and caching
+  const [searchCache, setSearchCache] = useState({});
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = React.useRef(null);
 
   // Sample trip data
   const recentTrips = [
@@ -135,14 +166,395 @@ export default function ProfileScreen() {
     },
   ];
 
-  const handleEndTrip = () => {
-    setShowTripModal(false);
-    // Add trip end logic here
+  // Popular Malaysian locations as fallback
+  const popularLocations = [
+    { name: 'Kuala Lumpur City Centre', coords: { latitude: 3.1579, longitude: 101.7116 } },
+    { name: 'Petaling Jaya', coords: { latitude: 3.1073, longitude: 101.6085 } },
+    { name: 'Shah Alam', coords: { latitude: 3.0733, longitude: 101.5185 } },
+    { name: 'Subang Jaya', coords: { latitude: 3.0498, longitude: 101.5854 } },
+    { name: 'Klang', coords: { latitude: 3.0449, longitude: 101.4456 } },
+    { name: 'Kajang', coords: { latitude: 2.9936, longitude: 101.7904 } },
+    { name: 'Ampang', coords: { latitude: 3.1498, longitude: 101.7668 } },
+    { name: 'Cheras', coords: { latitude: 3.1167, longitude: 101.7500 } },
+    { name: 'Kepong', coords: { latitude: 3.2107, longitude: 101.6400 } },
+    { name: 'Setapak', coords: { latitude: 3.2000, longitude: 101.7000 } },
+  ];
+
+  // Get fallback suggestions based on query
+  const getFallbackSuggestions = (query) => {
+    const lowerQuery = query.toLowerCase();
+    return popularLocations
+      .filter(location => 
+        location.name.toLowerCase().includes(lowerQuery) ||
+        lowerQuery.includes(location.name.toLowerCase().split(' ')[0])
+      )
+      .slice(0, 5)
+      .map((location, index) => ({
+        id: `fallback-${index}`,
+        address: query,
+        coordinates: location.coords,
+        formattedAddress: location.name,
+        isFallback: true,
+      }));
+  };
+
+  // Get current location on component mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Update map when selected origin/destination change
+  useEffect(() => {
+    if (selectedOrigin && selectedDestination) {
+      updateMapWithRoute();
+    } else if (currentLocation) {
+      // Reset to current location if no route
+      setMapRegion({
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+      setRouteCoordinates([]);
+      setOriginCoords(null);
+      setDestinationCoords(null);
+    }
+  }, [selectedOrigin, selectedDestination, currentLocation]);
+
+  // Search for location suggestions with debouncing and caching
+  const searchLocations = async (query, type) => {
+    if (query.length < 3) {
+      if (type === 'origin') {
+        setOriginSuggestions([]);
+        setShowOriginSuggestions(false);
+      } else {
+        setDestinationSuggestions([]);
+        setShowDestinationSuggestions(false);
+      }
+      return;
+    }
+
+    // Check cache first
+    const cacheKey = query.toLowerCase().trim();
+    if (searchCache[cacheKey]) {
+      const suggestions = searchCache[cacheKey];
+      if (type === 'origin') {
+        setOriginSuggestions(suggestions);
+        setShowOriginSuggestions(true);
+      } else {
+        setDestinationSuggestions(suggestions);
+        setShowDestinationSuggestions(true);
+      }
+      return;
+    }
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce the search
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (isSearching) return;
+      
+      setIsSearching(true);
+      
+      try {
+        const results = await Location.geocodeAsync(query);
+        const suggestions = await Promise.all(
+          results.slice(0, 5).map(async (result, index) => ({
+            id: `${type}-${index}`,
+            address: query,
+            coordinates: result,
+            formattedAddress: await reverseGeocode(result),
+          }))
+        );
+
+        // Cache the results
+        setSearchCache(prev => ({
+          ...prev,
+          [cacheKey]: suggestions
+        }));
+
+        if (type === 'origin') {
+          setOriginSuggestions(suggestions);
+          setShowOriginSuggestions(true);
+        } else {
+          setDestinationSuggestions(suggestions);
+          setShowDestinationSuggestions(true);
+        }
+      } catch (error) {
+        console.error('Error searching locations:', error);
+        
+        // Handle rate limit error with fallback suggestions
+        if (error.message.includes('rate limit')) {
+          console.log('Using fallback suggestions due to rate limit');
+          const fallbackSuggestions = getFallbackSuggestions(query);
+          
+          if (type === 'origin') {
+            setOriginSuggestions(fallbackSuggestions);
+            setShowOriginSuggestions(fallbackSuggestions.length > 0);
+          } else {
+            setDestinationSuggestions(fallbackSuggestions);
+            setShowDestinationSuggestions(fallbackSuggestions.length > 0);
+          }
+        } else {
+          // Show empty suggestions on other errors
+          if (type === 'origin') {
+            setOriginSuggestions([]);
+            setShowOriginSuggestions(false);
+          } else {
+            setDestinationSuggestions([]);
+            setShowDestinationSuggestions(false);
+          }
+        }
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500); // 500ms debounce
+  };
+
+  // Reverse geocode to get formatted address
+  const reverseGeocode = async (coordinates) => {
+    try {
+      const result = await Location.reverseGeocodeAsync(coordinates);
+      if (result.length > 0) {
+        const address = result[0];
+        return `${address.street || ''} ${address.city || ''} ${address.region || ''} ${address.country || ''}`.trim();
+      }
+      return 'Unknown location';
+    } catch (error) {
+      return 'Unknown location';
+    }
+  };
+
+  // Handle origin text change
+  const handleOriginChange = (text) => {
+    setOrigin(text);
+    if (text.length >= 3) {
+      searchLocations(text, 'origin');
+    } else {
+      setOriginSuggestions([]);
+      setShowOriginSuggestions(false);
+    }
+  };
+
+  // Handle destination text change
+  const handleDestinationChange = (text) => {
+    setDestination(text);
+    if (text.length >= 3) {
+      searchLocations(text, 'destination');
+    } else {
+      setDestinationSuggestions([]);
+      setShowDestinationSuggestions(false);
+    }
+  };
+
+  // Select origin from suggestions
+  const selectOrigin = (suggestion) => {
+    setSelectedOrigin(suggestion);
+    setOrigin(suggestion.formattedAddress);
+    setOriginCoords(suggestion.coordinates);
+    setShowOriginSuggestions(false);
+    setOriginSuggestions([]);
+  };
+
+  // Select destination from suggestions
+  const selectDestination = (suggestion) => {
+    setSelectedDestination(suggestion);
+    setDestination(suggestion.formattedAddress);
+    setDestinationCoords(suggestion.coordinates);
+    setShowDestinationSuggestions(false);
+    setDestinationSuggestions([]);
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Location permission is required to show your current location.');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      
+      setCurrentLocation(coords);
+      setMapRegion({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+
+      // Auto-fill origin with current location
+      try {
+        const reverseGeocodeResult = await Location.reverseGeocodeAsync(coords);
+        if (reverseGeocodeResult.length > 0) {
+          const address = reverseGeocodeResult[0];
+          const formattedAddress = `${address.street || ''} ${address.city || ''} ${address.region || ''} ${address.country || ''}`.trim();
+          
+          // Set origin with current location
+          setOrigin(formattedAddress);
+          setOriginCoords(coords);
+          setSelectedOrigin({
+            id: 'current-location',
+            address: formattedAddress,
+            coordinates: coords,
+            formattedAddress: formattedAddress,
+            isCurrentLocation: true,
+          });
+        }
+      } catch (reverseError) {
+        console.error('Error reverse geocoding current location:', reverseError);
+        // Fallback to coordinates if reverse geocoding fails
+        const fallbackAddress = `Current Location (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`;
+        setOrigin(fallbackAddress);
+        setOriginCoords(coords);
+        setSelectedOrigin({
+          id: 'current-location',
+          address: fallbackAddress,
+          coordinates: coords,
+          formattedAddress: fallbackAddress,
+          isCurrentLocation: true,
+        });
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+    }
+  };
+
+  const updateMapWithRoute = () => {
+    if (!selectedOrigin || !selectedDestination) return;
+
+    const lat1 = selectedOrigin.coordinates.latitude;
+    const lng1 = selectedOrigin.coordinates.longitude;
+    const lat2 = selectedDestination.coordinates.latitude;
+    const lng2 = selectedDestination.coordinates.longitude;
+    
+    // Calculate bounds to fit both points
+    const minLat = Math.min(lat1, lat2);
+    const maxLat = Math.max(lat1, lat2);
+    const minLng = Math.min(lng1, lng2);
+    const maxLng = Math.max(lng1, lng2);
+    
+    // Add padding to the bounds
+    const latPadding = (maxLat - minLat) * 0.1;
+    const lngPadding = (maxLng - minLng) * 0.1;
+    
+    setMapRegion({
+      latitude: (minLat + maxLat) / 2,
+      longitude: (minLng + maxLng) / 2,
+      latitudeDelta: Math.max(maxLat - minLat + latPadding, 0.01),
+      longitudeDelta: Math.max(maxLng - minLng + lngPadding, 0.01),
+    });
+
+    // Generate route coordinates (simplified - in production, use a routing service)
+    const routePoints = generateRoutePoints(
+      { latitude: lat1, longitude: lng1 },
+      { latitude: lat2, longitude: lng2 }
+    );
+    
+    setRouteCoordinates(routePoints);
+  };
+
+  // Generate route points (simplified routing)
+  const generateRoutePoints = (start, end) => {
+    const points = [];
+    const steps = 10; // Number of intermediate points
+    
+    for (let i = 0; i <= steps; i++) {
+      const ratio = i / steps;
+      const lat = start.latitude + (end.latitude - start.latitude) * ratio;
+      const lng = start.longitude + (end.longitude - start.longitude) * ratio;
+      
+      // Add some curve to make it look more realistic
+      const curveOffset = Math.sin(ratio * Math.PI) * 0.001;
+      points.push({
+        latitude: lat + curveOffset,
+        longitude: lng,
+      });
+    }
+    
+    return points;
   };
 
   const handleTripPress = (trip) => {
     setSelectedTrip(trip);
     setShowTripSummary(true);
+  };
+
+  const handleStartTrip = () => {
+    if (!selectedOrigin || !selectedDestination) {
+      Alert.alert('Missing Information', 'Please select both origin and destination from the search suggestions to start your trip.');
+      return;
+    }
+    
+    // Show map selection options
+    Alert.alert(
+      'Choose Navigation App',
+      'Select your preferred map app to navigate to your destination:',
+      [
+        {
+          text: 'Google Maps',
+          onPress: () => openMapApp('google', selectedDestination.formattedAddress),
+        },
+        {
+          text: 'Apple Maps',
+          onPress: () => openMapApp('apple', selectedDestination.formattedAddress),
+        },
+        {
+          text: 'Waze',
+          onPress: () => openMapApp('waze', selectedDestination.formattedAddress),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  const openMapApp = (app: string, destination: string) => {
+    let url = '';
+    
+    switch (app) {
+      case 'google':
+        url = `https://maps.google.com/maps?daddr=${encodeURIComponent(destination)}`;
+        break;
+      case 'apple':
+        url = `http://maps.apple.com/?daddr=${encodeURIComponent(destination)}`;
+        break;
+      case 'waze':
+        url = `https://waze.com/ul?q=${encodeURIComponent(destination)}`;
+        break;
+    }
+    
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Error', 'Could not open the selected map app.');
+    });
+    
+    // Start the trip monitoring
+    setIsTripActive(true);
+    setShowTripModal(true);
+  };
+
+  const handleEndTrip = () => {
+    setIsTripActive(false);
+    // The TripMonitoringModal will handle showing the completion screen
+    // We don't need to close the modal here as it will transition to completion view
   };
 
   return (
@@ -164,12 +576,147 @@ export default function ProfileScreen() {
         />
       </View>
 
+      {/* Map Card */}
+      <View style={styles.mapCard}>
+        <View style={styles.mapHeader}>
+          <Text style={styles.mapTitle}>Plan Your Trip</Text>
+        </View>
+        
+        <View style={styles.addressFields}>
+          <View style={styles.inputContainer}>
+            <Ionicons name="location" size={16} color="#FF6B35" style={styles.inputIcon} />
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Origin (auto-filled with current location)"
+              placeholderTextColor="rgba(255, 255, 255, 0.6)"
+              value={origin}
+              onChangeText={handleOriginChange}
+              onFocus={() => {
+                if (originSuggestions.length > 0) {
+                  setShowOriginSuggestions(true);
+                }
+              }}
+            />
+            {isSearching && origin.length >= 3 && (
+              <Ionicons name="hourglass-outline" size={16} color="#FF6B35" style={styles.loadingIcon} />
+            )}
+          </View>
+          
+          {/* Origin Suggestions */}
+          {showOriginSuggestions && originSuggestions.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              {originSuggestions.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.suggestionItem}
+                  onPress={() => selectOrigin(item)}
+                >
+                  <Ionicons name="location-outline" size={16} color="#FF6B35" />
+                  <Text style={styles.suggestionText}>{item.formattedAddress}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          
+          <View style={styles.inputContainer}>
+            <Ionicons name="flag" size={16} color="#FF6B35" style={styles.inputIcon} />
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Search destination location..."
+              placeholderTextColor="rgba(255, 255, 255, 0.6)"
+              value={destination}
+              onChangeText={handleDestinationChange}
+              onFocus={() => {
+                if (destinationSuggestions.length > 0) {
+                  setShowDestinationSuggestions(true);
+                }
+              }}
+            />
+            {isSearching && destination.length >= 3 && (
+              <Ionicons name="hourglass-outline" size={16} color="#FF6B35" style={styles.loadingIcon} />
+            )}
+          </View>
+          
+          {/* Destination Suggestions */}
+          {showDestinationSuggestions && destinationSuggestions.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              {destinationSuggestions.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.suggestionItem}
+                  onPress={() => selectDestination(item)}
+                >
+                  <Ionicons name="flag-outline" size={16} color="#FF6B35" />
+                  <Text style={styles.suggestionText}>{item.formattedAddress}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Map View */}
+        <View style={styles.mapContainer}>
+          <MapView
+            style={styles.map}
+            region={mapRegion}
+            showsUserLocation={true}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            showsScale={false}
+            showsBuildings={false}
+            showsTraffic={false}
+            showsIndoors={false}
+            mapType="standard"
+          >
+            {/* Current Location Marker */}
+            {currentLocation && !originCoords && (
+              <Marker
+                coordinate={currentLocation}
+                title="Your Location"
+                description="Current position"
+                pinColor="blue"
+              />
+            )}
+
+            {/* Origin Marker */}
+            {originCoords && (
+              <Marker
+                coordinate={originCoords}
+                title="Origin"
+                description={origin}
+                pinColor="green"
+              />
+            )}
+
+            {/* Destination Marker */}
+            {destinationCoords && (
+              <Marker
+                coordinate={destinationCoords}
+                title="Destination"
+                description={destination}
+                pinColor="red"
+              />
+            )}
+
+            {/* Route Polyline */}
+            {routeCoordinates.length > 0 && (
+              <Polyline
+                coordinates={routeCoordinates}
+                strokeColor="#FF6B35"
+                strokeWidth={3}
+                lineDashPattern={[5, 5]}
+              />
+            )}
+          </MapView>
+        </View>
+      </View>
+
       {/* Start Trip button with shiny effects */}
       <View style={styles.ctaContainer}>
         <StartTripButtonShiny
           title="Start Trip"
           subtitle="Safe mode • GPS on"
-          onPress={() => setShowTripModal(true)}
+          onPress={() => handleStartTrip()}
           width={screenWidth - 32}
           height={60}
           iconName="play"
@@ -261,7 +808,7 @@ const styles = StyleSheet.create({
   gaugeCard: {
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
 
   ctaContainer: {
@@ -271,11 +818,19 @@ const styles = StyleSheet.create({
   card: {
     marginTop: 18,
     marginHorizontal: 16,
-    backgroundColor: CARD,
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: DIVIDER,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cardHeader: {
     flexDirection: "row",
@@ -291,8 +846,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: DIVIDER,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    marginVertical: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
   },
   tripDate: { color: TEXT, fontWeight: "700", fontSize: 16 },
   tripSub: { color: MUTED, marginTop: 2 },
@@ -302,6 +861,91 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tripScore: { color: TEXT, fontWeight: "800", fontSize: 16 },
+
+  mapCard: {
+    marginTop: 18,
+    marginHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  mapHeader: {
+    marginBottom: 16,
+  },
+  mapTitle: {
+    color: TEXT,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  addressFields: {
+    gap: 12,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  loadingIcon: {
+    marginLeft: 8,
+  },
+  addressInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  mapContainer: {
+    height: 200,
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  map: {
+    flex: 1,
+  },
+  suggestionsContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 4,
+    maxHeight: 150,
+    zIndex: 1000,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  suggestionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+  },
 
   bottomPad: { height: 40 },
 });
