@@ -2,6 +2,11 @@
 
 A mobile app for incentivizing safer, low-risk driving by issuing cryptocurrency tokens and NFTs for verified driving behavior. Features an automotive-themed, safety-focused, tech-savvy UI designed for both iOS and Android.
 
+![RoadSolSafe App](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-blue)
+![React Native](https://img.shields.io/badge/React%20Native-0.72+-61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
+![Expo](https://img.shields.io/badge/Expo-49+-000020)
+
 ## 🚗 Features
 
 ### Core Functionality
@@ -21,45 +26,61 @@ A mobile app for incentivizing safer, low-risk driving by issuing cryptocurrency
 
 ## 📱 Screens
 
-### 1. Profile Screen
-- Safety score gauge (circular progress, 0-10 scale)
-- Weekly earnings and badge carousel
-- Recent trip history
-- Settings and wallet integration
+### 1. Profile Screen (Home)
+- **Safety Cluster**: Circular gauges for safety score, total trips (km), and day streak
+- **Start Trip Button**: Shiny animated button with glassmorphic effects
+- **Recent Trips**: Glassmorphic cards showing trip history with detailed summaries
+- **Trip Monitoring**: Real-time trip tracking with circular loading animation
+- **Trip Summary Modal**: Comprehensive trip analysis with route maps and metrics
 
 ### 2. Quests Screen
-- Daily challenges (Smooth Operator, Route Explorer, Pace Yourself)
-- Weekly challenges (Flow State, City Explorer, Eco Friendly)
-- Progress tracking with visual indicators
-- Reward claiming system
+- **Daily Challenges**: Smooth Operator, Route Explorer, Pace Yourself
+- **Weekly Challenges**: Flow State, City Explorer, Eco Friendly
+- **Progress Tracking**: Visual progress bars with gradient colors
+- **Reward System**: Points and multiplier rewards for quest completion
+- **Statistics**: Points and streak counters with gradient text effects
 
 ### 3. Map Screen
-- Full-screen interactive map with MapLibre GL
-- Start/stop trip functionality
-- Real-time trip tracking
-- Navigation app integration
-- Safety tips overlay
+- **Interactive Map**: Full-screen MapLibre GL integration
+- **Origin/Destination Input**: Custom address input fields
+- **Navigation Integration**: Deep links to preferred map apps
+- **Start Navigation Button**: Shiny animated button with glassmorphic styling
+- **Trip Tracking**: Real-time location and route monitoring
 
 ### 4. Leaderboard Screen
-- Global and weekly rankings
-- Podium display for top performers
-- Safety score and streak tracking
-- Current user highlighting
+- **Global Rankings**: Worldwide driver leaderboard
+- **Weekly Rankings**: Time-based competition rankings
+- **User Statistics**: Personal rank, points, and streak tracking
+- **Filter Options**: Toggle between global and weekly views
+- **Podium Display**: Top performers with special highlighting
 
-### 5. Socials Screen
-- Friend connections and activity feed
-- Points sharing and competition
-- Friend code system
-- Online status indicators
+### 5. Socials Screen (Friends)
+- **Friend Connections**: Add and manage friend connections
+- **Activity Feed**: Recent friend activities and achievements
+- **Online Status**: Real-time friend availability indicators
+- **Social Statistics**: Friend count and online user tracking
+- **Friend Codes**: Unique codes for easy friend connections
+
+### 6. Wallet Screen
+- **USDT Balance**: Gradient text display with shiny blue effects
+- **Transaction History**: Recent USDT claims and airdrops
+- **Phantom Wallet Integration**: Connect Solana wallet functionality
+- **Weekly Claims**: Countdown timer and estimated payouts
+- **Points Tracking**: Total points and weekly progress
 
 ## 🛠 Technical Stack
 
 ### Frontend
-- **React Native** with Expo
-- **TypeScript** for type safety
-- **React Navigation** for screen management
-- **MapLibre GL** for map rendering
-- **Expo Vector Icons** for iconography
+- **React Native** with Expo SDK 49+
+- **TypeScript** for type safety and better development experience
+- **React Navigation** v6 for screen management and tab navigation
+- **MapLibre GL** for interactive map rendering
+- **Expo Vector Icons** for comprehensive iconography
+- **Expo Linear Gradient** for gradient effects
+- **React Native SVG** for custom gauge components
+- **MaskedView** for gradient text effects
+- **Expo Location** for GPS tracking
+- **Expo Sensors** for IMU data collection
 
 ### Backend (Planned)
 - **Node.js** with Fastify
@@ -72,33 +93,38 @@ A mobile app for incentivizing safer, low-risk driving by issuing cryptocurrency
 - **SPL Token 2022** for rewards
 - **Private Ephemeral Rollup** for secure computation
 
-## 🎨 Design System
+## 🎨 Key Design Features
 
-### Colors
+### Visual Design
+- **Automotive Theme**: Digital cockpit aesthetic with dark backgrounds
+- **Glassmorphic UI**: Subtle transparency effects throughout the app
+- **Gradient Text**: Shiny blue gradients for USDT balances and important metrics
+- **Circular Gauges**: Custom SVG-based safety score and metrics displays
+- **Animated Elements**: Smooth transitions and interactive feedback
+- **High Contrast**: Accessible design with proper contrast ratios
+
+### Color Palette
 ```typescript
 const theme = {
   colors: {
     background: '#1F2328',    // Deep charcoal
+    surface: '#2A2F36',       // Darker surface
     primary: '#1E90FF',       // Electric blue
+    secondary: '#3A3F45',     // Slate gray
+    accent: '#D1D5DB',        // Silver
     success: '#32CD32',       // Neon green
-    gold: '#EBCB6C',          // Gold for rewards
     warning: '#FFA500',       // Orange
     error: '#FF4444',        // Red
+    gold: '#EBCB6C',          // Gold for rewards
   }
 }
 ```
 
 ### Typography
-- **Font Family**: System fonts (San Francisco for iOS, Roboto for Android)
-- **Hierarchy**: Emphasizes safety scores and rewards
-- **Accessibility**: High contrast ratios for readability
-
-### Components
-- **Button**: Multiple variants with automotive styling
-- **Card**: Glass morphism with subtle gradients
-- **SafetyScoreGauge**: Circular progress indicator
-- **ProgressBar**: Dynamic color changes based on completion
-- **DeviceFrame**: iPhone 15 Pro and Pixel 8 mockups
+- **System Fonts**: San Francisco (iOS) and Roboto (Android)
+- **Hierarchy**: Clear distinction between headings, body text, and labels
+- **Accessibility**: High contrast ratios and proper font sizing
+- **Gradient Text**: Special effects for important numerical values
 
 ## 🚀 Getting Started
 
@@ -129,19 +155,25 @@ npm run android
 ### Project Structure
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── Button.tsx
-│   ├── Card.tsx
-│   └── DeviceFrame.tsx
-├── screens/            # Main app screens
-│   ├── ProfileScreen.tsx
-│   ├── QuestsScreen.tsx
-│   ├── MapScreen.tsx
-│   ├── LeaderboardScreen.tsx
-│   ├── SocialsScreen.tsx
-│   └── DeviceFrameDemo.tsx
-└── styles/
-    └── theme.ts        # Design system and theme
+├── components/                    # Reusable UI components
+│   ├── Button.tsx                # Custom button component
+│   ├── Card.tsx                  # Glassmorphic card component
+│   ├── GradientText.tsx          # Gradient text effects
+│   ├── CircleGauge.tsx           # Circular progress gauges
+│   ├── SafetyCluster.tsx         # Safety metrics cluster
+│   ├── StartTripButtonShiny.tsx  # Animated trip button
+│   ├── TripSummaryModal.tsx      # Trip analysis modal
+│   └── CustomTabBar.tsx          # Custom tab navigation
+├── screens/                      # Main app screens
+│   ├── ProfileScreen.tsx         # Home/Dashboard screen
+│   ├── QuestsScreen.tsx          # Quest management
+│   ├── MapScreen.tsx             # Map and navigation
+│   ├── LeaderboardScreen.tsx     # Rankings and competition
+│   ├── SocialsScreen.tsx         # Friends and social features
+│   └── WalletScreen.tsx          # USDT wallet and transactions
+├── styles/
+│   └── theme.ts                  # Design system and theme
+└── App.tsx                       # Main app component
 ```
 
 ## 🔒 Privacy & Security
@@ -208,25 +240,33 @@ Subtract per 10km driven:
 - Quest progress tracking
 - Safety score calculations
 
-## 🔮 Future Roadmap
+## 🔮 Development Status
 
-### Phase 1 (MVP)
-- ✅ Core mobile app with all screens
-- ✅ Basic safety scoring algorithm
-- ✅ Quest system implementation
-- ✅ Social features and leaderboards
+### ✅ Completed Features
+- **Core Mobile App**: All 6 main screens implemented
+- **Automotive UI Design**: Dark theme with glassmorphic effects
+- **Safety Cluster**: Circular gauges for metrics display
+- **Gradient Text Effects**: Shiny blue gradients for important values
+- **Trip Management**: Start/stop functionality with monitoring
+- **Quest System**: Daily and weekly challenges with progress tracking
+- **Social Features**: Friends list and leaderboard rankings
+- **Wallet Integration**: USDT balance display and Phantom wallet connection
+- **Map Integration**: MapLibre GL with navigation app deep linking
+- **Custom Tab Navigation**: Animated tab bar with expandable labels
+- **Responsive Design**: iPhone 15 Pro and Pixel 8 optimized layouts
 
-### Phase 2 (Expansion)
-- Fleet driver support
-- City partner integrations
-- Advanced analytics dashboard
-- Enhanced anti-cheat measures
+### 🚧 In Progress
+- **Backend Integration**: API endpoints for data persistence
+- **Real-time Tracking**: Live GPS and sensor data collection
+- **Blockchain Integration**: Solana smart contracts for rewards
+- **Anti-cheat System**: Fraud detection and prevention
 
-### Phase 3 (Scale)
-- Multi-chain support
-- Advanced AI coaching
-- Insurance partnerships
-- Global expansion
+### 📋 Planned Features
+- **Fleet Driver Support**: Multi-vehicle management
+- **City Partnerships**: Municipal integration programs
+- **Advanced Analytics**: Detailed driving behavior insights
+- **Insurance Partnerships**: Risk assessment integration
+- **Multi-chain Support**: Ethereum and other blockchain networks
 
 ## 📄 License
 
