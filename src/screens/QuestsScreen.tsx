@@ -13,6 +13,7 @@ import { Card, ProgressBar, Badge } from '../components/Card';
 import { Button } from '../components/Button';
 import { theme } from '../styles/theme';
 import GradientText from '../components/GradientText';
+import { fonts } from '../styles/fonts';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -305,14 +306,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   headerTitle: {
-    fontSize: theme.typography.fontSize['3xl'],
-    fontWeight: 'bold',
+    ...fonts.h1,
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: theme.typography.fontSize.base,
+    ...fonts.body,
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
@@ -341,15 +341,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   statValue: {
-    fontSize: 38,
-    fontWeight: theme.typography.fontWeight.bold,
+    ...fonts.score,
     textAlign: 'center',
     marginBottom: theme.spacing.xs,
   },
   statLabel: {
+    ...fonts.label,
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
   },
 
   // Tab styles
@@ -373,11 +371,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   tabText: {
+    ...fonts.button,
     color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
   },
   activeTabText: {
+    ...fonts.button,
     color: '#FFFFFF',
   },
 
@@ -407,7 +405,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   questCardCompleted: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(50, 205, 50, 0.2)',
+    borderColor: 'rgba(50, 205, 50, 0.4)',
   },
   questHeader: {
     flexDirection: 'row',
@@ -427,14 +426,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   questTitle: {
+    ...fonts.button,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 4,
   },
   questDescription: {
+    ...fonts.caption,
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
     lineHeight: 16,
     marginBottom: 6,
   },
@@ -443,23 +441,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   streakText: {
+    ...fonts.caption,
     color: '#FF6B35',
-    fontSize: 10,
-    fontWeight: '500',
     marginLeft: 4,
   },
   questReward: {
     alignItems: 'flex-end',
   },
   rewardPoints: {
+    ...fonts.label,
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   rewardLabel: {
+    ...fonts.caption,
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 10,
-    fontWeight: '500',
   },
   questProgress: {
     marginTop: theme.spacing.md,
@@ -471,22 +466,20 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   progressLabel: {
+    ...fonts.caption,
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
   },
   progressText: {
+    ...fonts.caption,
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
   },
   completedContainer: {
     alignItems: 'flex-end',
     marginBottom: 6,
   },
   completedText: {
-    color: '#00FF00',
-    fontSize: 12,
+    ...fonts.caption,
+    color: '#32CD32',
     fontWeight: 'bold',
   },
   progressBarContainer: {

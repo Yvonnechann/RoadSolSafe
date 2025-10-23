@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { fonts } from '../styles/fonts';
 
 interface ButtonProps {
   title: string;
@@ -185,17 +186,17 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   buttonText: {
-    fontWeight: theme.typography.fontWeight.semibold,
+    ...fonts.button,
     textAlign: 'center',
   },
   buttonText_sm: {
-    fontSize: theme.typography.fontSize.sm,
+    ...fonts.bodySmall,
   },
   buttonText_md: {
-    fontSize: theme.typography.fontSize.base,
+    ...fonts.button,
   },
   buttonText_lg: {
-    fontSize: theme.typography.fontSize.lg,
+    ...fonts.buttonLarge,
   },
   buttonTextPrimary: {
     color: '#FFFFFF',

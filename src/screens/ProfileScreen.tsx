@@ -7,6 +7,8 @@ import SafetyCluster from "../components/SafetyCluster";
 import StartTripButtonShiny from "../components/StartTripButtonShiny";
 import TripMonitoringModal from "../components/TripMonitoringModal";
 import TripSummaryModal from "../components/TripSummaryModal";
+import LocationSearchService, { LocationSuggestion } from "../services/LocationSearchService";
+import { fonts } from "../styles/fonts";
 import { theme } from "../styles/theme";
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -36,17 +38,16 @@ export default function ProfileScreen() {
   });
 
   // Search states
-  const [originSuggestions, setOriginSuggestions] = useState([]);
-  const [destinationSuggestions, setDestinationSuggestions] = useState([]);
+  const [originSuggestions, setOriginSuggestions] = useState<LocationSuggestion[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<LocationSuggestion[]>([]);
   const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
-  const [selectedOrigin, setSelectedOrigin] = useState(null);
-  const [selectedDestination, setSelectedDestination] = useState(null);
+  const [selectedOrigin, setSelectedOrigin] = useState<LocationSuggestion | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<LocationSuggestion | null>(null);
   
   // Debouncing and caching
-  const [searchCache, setSearchCache] = useState({});
   const [isSearching, setIsSearching] = useState(false);
-  const searchTimeoutRef = React.useRef(null);
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Sample trip data
   const recentTrips = [
@@ -82,7 +83,7 @@ export default function ProfileScreen() {
       ],
       events: {
         hardBrake: 0,
-        hardAccel: 0,
+        hardAccel: 1,
         harshTurn: 0,
         speeding: 0,
         phoneUse: 0,
@@ -118,11 +119,11 @@ export default function ProfileScreen() {
         { latitude: 3.1495, longitude: 101.6940 },
       ],
       events: {
-        hardBrake: 1,
-        hardAccel: 0,
+        hardBrake: 2,
+        hardAccel: 2,
         harshTurn: 0,
-        speeding: 5,
-        phoneUse: 0,
+        speeding: 2,
+        phoneUse: 1,
       },
       recommendation: "Good overall driving! Try to avoid sudden braking and watch your speed limits.",
     },
@@ -159,44 +160,12 @@ export default function ProfileScreen() {
         hardBrake: 0,
         hardAccel: 0,
         harshTurn: 0,
-        speeding: 0,
-        phoneUse: 0,
+        speeding: 1,
+        phoneUse: 2,
       },
       recommendation: "Outstanding performance! You're setting a great example for safe driving.",
     },
   ];
-
-  // Popular Malaysian locations as fallback
-  const popularLocations = [
-    { name: 'Kuala Lumpur City Centre', coords: { latitude: 3.1579, longitude: 101.7116 } },
-    { name: 'Petaling Jaya', coords: { latitude: 3.1073, longitude: 101.6085 } },
-    { name: 'Shah Alam', coords: { latitude: 3.0733, longitude: 101.5185 } },
-    { name: 'Subang Jaya', coords: { latitude: 3.0498, longitude: 101.5854 } },
-    { name: 'Klang', coords: { latitude: 3.0449, longitude: 101.4456 } },
-    { name: 'Kajang', coords: { latitude: 2.9936, longitude: 101.7904 } },
-    { name: 'Ampang', coords: { latitude: 3.1498, longitude: 101.7668 } },
-    { name: 'Cheras', coords: { latitude: 3.1167, longitude: 101.7500 } },
-    { name: 'Kepong', coords: { latitude: 3.2107, longitude: 101.6400 } },
-    { name: 'Setapak', coords: { latitude: 3.2000, longitude: 101.7000 } },
-  ];
-
-  // Get fallback suggestions based on query
-  const getFallbackSuggestions = (query) => {
-    const lowerQuery = query.toLowerCase();
-    return popularLocations
-      .filter(location => 
-        location.name.toLowerCase().includes(lowerQuery) ||
-        lowerQuery.includes(location.name.toLowerCase().split(' ')[0])
-      )
-      .slice(0, 5)
-      .map((location, index) => ({
-        id: `fallback-${index}`,
-        address: query,
-        coordinates: location.coords,
-        formattedAddress: location.name,
-        isFallback: true,
-      }));
-  };
 
   // Get current location on component mount
   useEffect(() => {
@@ -230,29 +199,15 @@ export default function ProfileScreen() {
     }
   }, [selectedOrigin, selectedDestination, currentLocation]);
 
-  // Search for location suggestions with debouncing and caching
-  const searchLocations = async (query, type) => {
-    if (query.length < 3) {
+  // Search for location suggestions with debouncing
+  const searchLocations = async (query: string, type: 'origin' | 'destination') => {
+    if (query.length < 2) {
       if (type === 'origin') {
         setOriginSuggestions([]);
         setShowOriginSuggestions(false);
       } else {
         setDestinationSuggestions([]);
         setShowDestinationSuggestions(false);
-      }
-      return;
-    }
-
-    // Check cache first
-    const cacheKey = query.toLowerCase().trim();
-    if (searchCache[cacheKey]) {
-      const suggestions = searchCache[cacheKey];
-      if (type === 'origin') {
-        setOriginSuggestions(suggestions);
-        setShowOriginSuggestions(true);
-      } else {
-        setDestinationSuggestions(suggestions);
-        setShowDestinationSuggestions(true);
       }
       return;
     }
@@ -269,78 +224,37 @@ export default function ProfileScreen() {
       setIsSearching(true);
       
       try {
-        const results = await Location.geocodeAsync(query);
-        const suggestions = await Promise.all(
-          results.slice(0, 5).map(async (result, index) => ({
-            id: `${type}-${index}`,
-            address: query,
-            coordinates: result,
-            formattedAddress: await reverseGeocode(result),
-          }))
-        );
-
-        // Cache the results
-        setSearchCache(prev => ({
-          ...prev,
-          [cacheKey]: suggestions
-        }));
-
+        const result = await LocationSearchService.searchLocations(query, 5);
+        
         if (type === 'origin') {
-          setOriginSuggestions(suggestions);
-          setShowOriginSuggestions(true);
+          setOriginSuggestions(result.suggestions);
+          setShowOriginSuggestions(result.suggestions.length > 0);
         } else {
-          setDestinationSuggestions(suggestions);
-          setShowDestinationSuggestions(true);
+          setDestinationSuggestions(result.suggestions);
+          setShowDestinationSuggestions(result.suggestions.length > 0);
         }
       } catch (error) {
         console.error('Error searching locations:', error);
         
-        // Handle rate limit error with fallback suggestions
-        if (error.message.includes('rate limit')) {
-          console.log('Using fallback suggestions due to rate limit');
-          const fallbackSuggestions = getFallbackSuggestions(query);
-          
-          if (type === 'origin') {
-            setOriginSuggestions(fallbackSuggestions);
-            setShowOriginSuggestions(fallbackSuggestions.length > 0);
-          } else {
-            setDestinationSuggestions(fallbackSuggestions);
-            setShowDestinationSuggestions(fallbackSuggestions.length > 0);
-          }
+        // Show empty suggestions on error
+        if (type === 'origin') {
+          setOriginSuggestions([]);
+          setShowOriginSuggestions(false);
         } else {
-          // Show empty suggestions on other errors
-          if (type === 'origin') {
-            setOriginSuggestions([]);
-            setShowOriginSuggestions(false);
-          } else {
-            setDestinationSuggestions([]);
-            setShowDestinationSuggestions(false);
-          }
+          setDestinationSuggestions([]);
+          setShowDestinationSuggestions(false);
         }
       } finally {
         setIsSearching(false);
       }
-    }, 500); // 500ms debounce
+    }, 300); // 300ms debounce
   };
 
-  // Reverse geocode to get formatted address
-  const reverseGeocode = async (coordinates) => {
-    try {
-      const result = await Location.reverseGeocodeAsync(coordinates);
-      if (result.length > 0) {
-        const address = result[0];
-        return `${address.street || ''} ${address.city || ''} ${address.region || ''} ${address.country || ''}`.trim();
-      }
-      return 'Unknown location';
-    } catch (error) {
-      return 'Unknown location';
-    }
-  };
 
   // Handle origin text change
-  const handleOriginChange = (text) => {
+  const handleOriginChange = (text: string) => {
     setOrigin(text);
-    if (text.length >= 3) {
+    if (text.length >= 2) {
       searchLocations(text, 'origin');
     } else {
       setOriginSuggestions([]);
@@ -349,9 +263,9 @@ export default function ProfileScreen() {
   };
 
   // Handle destination text change
-  const handleDestinationChange = (text) => {
+  const handleDestinationChange = (text: string) => {
     setDestination(text);
-    if (text.length >= 3) {
+    if (text.length >= 2) {
       searchLocations(text, 'destination');
     } else {
       setDestinationSuggestions([]);
@@ -360,7 +274,7 @@ export default function ProfileScreen() {
   };
 
   // Select origin from suggestions
-  const selectOrigin = (suggestion) => {
+  const selectOrigin = (suggestion: LocationSuggestion) => {
     setSelectedOrigin(suggestion);
     setOrigin(suggestion.formattedAddress);
     setOriginCoords(suggestion.coordinates);
@@ -369,7 +283,7 @@ export default function ProfileScreen() {
   };
 
   // Select destination from suggestions
-  const selectDestination = (suggestion) => {
+  const selectDestination = (suggestion: LocationSuggestion) => {
     setSelectedDestination(suggestion);
     setDestination(suggestion.formattedAddress);
     setDestinationCoords(suggestion.coordinates);
@@ -379,60 +293,25 @@ export default function ProfileScreen() {
 
   const getCurrentLocation = async () => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required to show your current location.');
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
+      const currentLocationSuggestion = await LocationSearchService.getCurrentLocation();
       
-      setCurrentLocation(coords);
-      setMapRegion({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-
-      // Auto-fill origin with current location
-      try {
-        const reverseGeocodeResult = await Location.reverseGeocodeAsync(coords);
-        if (reverseGeocodeResult.length > 0) {
-          const address = reverseGeocodeResult[0];
-          const formattedAddress = `${address.street || ''} ${address.city || ''} ${address.region || ''} ${address.country || ''}`.trim();
-          
-          // Set origin with current location
-          setOrigin(formattedAddress);
-          setOriginCoords(coords);
-          setSelectedOrigin({
-            id: 'current-location',
-            address: formattedAddress,
-            coordinates: coords,
-            formattedAddress: formattedAddress,
-            isCurrentLocation: true,
-          });
-        }
-      } catch (reverseError) {
-        console.error('Error reverse geocoding current location:', reverseError);
-        // Fallback to coordinates if reverse geocoding fails
-        const fallbackAddress = `Current Location (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`;
-        setOrigin(fallbackAddress);
-        setOriginCoords(coords);
-        setSelectedOrigin({
-          id: 'current-location',
-          address: fallbackAddress,
-          coordinates: coords,
-          formattedAddress: fallbackAddress,
-          isCurrentLocation: true,
+      if (currentLocationSuggestion) {
+        setCurrentLocation(currentLocationSuggestion.coordinates);
+        setMapRegion({
+          latitude: currentLocationSuggestion.coordinates.latitude,
+          longitude: currentLocationSuggestion.coordinates.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
         });
+
+        // Auto-fill origin with current location
+        setOrigin(currentLocationSuggestion.formattedAddress);
+        setOriginCoords(currentLocationSuggestion.coordinates);
+        setSelectedOrigin(currentLocationSuggestion);
       }
     } catch (error) {
-      console.error('Error getting location:', error);
+      console.error('Error getting current location:', error);
+      Alert.alert('Error', 'Unable to get current location. Please check your location permissions.');
     }
   };
 
@@ -777,7 +656,7 @@ export default function ProfileScreen() {
   );
 }
 
-const BG = "#0F1722";
+const BG = "transparent";
 const CARD = "#0B111A";
 const TEXT = "#E8F0FF";
 const MUTED = "rgba(210,225,245,0.8)";
@@ -793,15 +672,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   welcomeTitle: { 
+    ...fonts.h2,
     color: TEXT, 
-    fontSize: 24, 
-    fontWeight: "800",
     marginBottom: 4,
   },
   welcomeSubtitle: { 
+    ...fonts.body,
     color: MUTED, 
-    fontSize: 16,
-    fontWeight: "500",
     textAlign: "center",
   },
 
@@ -838,8 +715,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  cardTitle: { color: TEXT, fontSize: 20, fontWeight: "800" },
-  link: { color: "#2D82FF", fontWeight: "700" },
+  cardTitle: { ...fonts.h4, color: TEXT },
+  link: { ...fonts.button, color: "#2D82FF" },
 
   tripRow: {
     flexDirection: "row",
@@ -853,14 +730,14 @@ const styles = StyleSheet.create({
     marginVertical: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.01)',
   },
-  tripDate: { color: TEXT, fontWeight: "700", fontSize: 16 },
-  tripSub: { color: MUTED, marginTop: 2 },
+  tripDate: { ...fonts.button, color: TEXT },
+  tripSub: { ...fonts.bodySmall, color: MUTED, marginTop: 2 },
   tripScoreContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  tripScore: { color: TEXT, fontWeight: "800", fontSize: 16 },
+  tripScore: { ...fonts.button, color: TEXT },
 
   mapCard: {
     marginTop: 18,

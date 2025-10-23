@@ -34,12 +34,12 @@ export const theme = {
   },
   
   typography: {
-    // Font families (Trebuchet MS family)
+    // Font families (System fonts for better performance and consistency)
     fontFamily: {
-      regular: 'Trebuchet MS',
-      medium: 'Trebuchet MS',
-      bold: 'Trebuchet MS Bold',
-      light: 'Trebuchet MS',
+      regular: 'System',
+      medium: 'System',
+      bold: 'System',
+      light: 'System',
     },
     
     // Font sizes

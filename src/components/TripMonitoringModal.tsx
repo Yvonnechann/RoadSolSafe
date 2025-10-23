@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { fonts } from '../styles/fonts';
 
 interface TripMonitoringModalProps {
   visible: boolean;
@@ -241,9 +242,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   headerTitle: {
+    ...fonts.buttonLarge,
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
   },
   placeholder: {
     width: 40,
@@ -264,15 +264,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   completionTitle: {
+    ...fonts.h1,
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
   },
   completionSubtitle: {
+    ...fonts.body,
     color: '#FFFFFF',
-    fontSize: 16,
     textAlign: 'center',
   },
   
@@ -286,9 +285,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cardTitle: {
+    ...fonts.h4,
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
     marginBottom: 20,
   },
   

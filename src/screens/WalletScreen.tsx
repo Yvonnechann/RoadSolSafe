@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../styles/theme';
+import { fonts } from '../styles/fonts';
 import GradientText from '../components/GradientText';
 
 const { width: screenWidth } = Dimensions.get('window');

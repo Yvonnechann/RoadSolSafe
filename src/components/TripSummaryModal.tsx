@@ -11,8 +11,17 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import { fonts } from "../styles/fonts";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Score color logic - same as SafetyCluster
+const colorByScore = (s: number) =>
+  s < 3.5 ? "#FF4D4F" : s < 6.0 ? "#FFA940" : s < 8.0 ? "#FFD45E" : "#52C41A";
+
+// Events color logic - red if >= 2, white otherwise
+const colorByEvent = (value: number) =>
+  value >= 2 ? "#FF4D4F" : "#FFFFFF";
 
 interface TripData {
   id: string;
@@ -159,7 +168,12 @@ export default function TripSummaryModal({ visible, onClose, tripData }: Props) 
                     <Ionicons name="shield-outline" size={24} color="#FFFFFF" />
                   </View>
                   <Text style={styles.metricLabel}>Score</Text>
-                  <Text style={styles.metricValue}>{tripData.score}/10</Text>
+                  <Text style={styles.metricValue}>
+                    <Text style={{ color: colorByScore(tripData.score) }}>
+                      {tripData.score}
+                    </Text>
+                    <Text style={{ color: '#FFFFFF' }}>/10</Text>
+                  </Text>
                 </View>
                 
                 <View style={styles.metricItem}>
@@ -201,27 +215,37 @@ export default function TripSummaryModal({ visible, onClose, tripData }: Props) 
             
             <View style={styles.eventsContainer}>
               <View style={styles.eventItem}>
-                <Text style={styles.eventValue}>{tripData.events.hardBrake}</Text>
+                <Text style={[styles.eventValue, { color: colorByEvent(tripData.events.hardBrake) }]}>
+                  {tripData.events.hardBrake}
+                </Text>
                 <Text style={styles.eventLabel}>Hard Brake</Text>
               </View>
               
               <View style={styles.eventItem}>
-                <Text style={styles.eventValue}>{tripData.events.hardAccel}</Text>
+                <Text style={[styles.eventValue, { color: colorByEvent(tripData.events.hardAccel) }]}>
+                  {tripData.events.hardAccel}
+                </Text>
                 <Text style={styles.eventLabel}>Hard Accel</Text>
               </View>
               
               <View style={styles.eventItem}>
-                <Text style={styles.eventValue}>{tripData.events.harshTurn}</Text>
+                <Text style={[styles.eventValue, { color: colorByEvent(tripData.events.harshTurn) }]}>
+                  {tripData.events.harshTurn}
+                </Text>
                 <Text style={styles.eventLabel}>Harsh Turn</Text>
               </View>
               
               <View style={styles.eventItem}>
-                <Text style={styles.eventValue}>{tripData.events.speeding}%</Text>
+                <Text style={[styles.eventValue, { color: colorByEvent(tripData.events.speeding) }]}>
+                  {tripData.events.speeding}%
+                </Text>
                 <Text style={styles.eventLabel}>Speeding</Text>
               </View>
               
               <View style={styles.eventItem}>
-                <Text style={styles.eventValue}>{tripData.events.phoneUse}</Text>
+                <Text style={[styles.eventValue, { color: colorByEvent(tripData.events.phoneUse) }]}>
+                  {tripData.events.phoneUse}
+                </Text>
                 <Text style={styles.eventLabel}>Phone Use</Text>
               </View>
             </View>
@@ -273,9 +297,8 @@ const styles = StyleSheet.create({
   },
   
   headerTitle: {
+    ...fonts.h4,
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
   },
   
   placeholder: {
@@ -370,9 +393,8 @@ const styles = StyleSheet.create({
   },
   
   addressText: {
+    ...fonts.bodySmall,
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
     flex: 1,
   },
   
@@ -381,9 +403,8 @@ const styles = StyleSheet.create({
   },
   
   sectionTitle: {
+    ...fonts.h2,
     color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800',
     marginBottom: 20,
   },
   
@@ -418,16 +439,14 @@ const styles = StyleSheet.create({
   },
   
   metricLabel: {
+    ...fonts.label,
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 14,
-    fontWeight: '600',
     marginBottom: 4,
   },
   
   metricValue: {
+    ...fonts.h4,
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
   },
   
   separator: {
@@ -449,16 +468,14 @@ const styles = StyleSheet.create({
   },
   
   eventValue: {
+    ...fonts.h3,
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
     marginBottom: 4,
   },
   
   eventLabel: {
+    ...fonts.caption,
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    fontWeight: '600',
     textAlign: 'center',
   },
   
@@ -488,9 +505,8 @@ const styles = StyleSheet.create({
   },
   
   coachTitle: {
+    ...fonts.h3,
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
   },
   
   recommendationContainer: {
@@ -498,15 +514,13 @@ const styles = StyleSheet.create({
   },
   
   recommendationLabel: {
+    ...fonts.button,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   
   recommendationText: {
+    ...fonts.body,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '500',
     lineHeight: 24,
   },
 });

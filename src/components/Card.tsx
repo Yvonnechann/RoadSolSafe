@@ -9,6 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { fonts } from '../styles/fonts';
 
 interface CardProps {
   children: React.ReactNode;
@@ -282,13 +283,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   gaugeScore: {
+    ...fonts.score,
     color: theme.colors.text,
-    fontWeight: theme.typography.fontWeight.bold,
     lineHeight: 1,
   },
   gaugeMax: {
+    ...fonts.label,
     color: theme.colors.textSecondary,
-    fontWeight: theme.typography.fontWeight.medium,
     lineHeight: 1,
   },
 
@@ -306,9 +307,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
   },
   progressBarText: {
+    ...fonts.label,
     color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
     marginLeft: theme.spacing.sm,
   },
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OnboardingFlow } from './src/screens/OnboardingFlow';
@@ -69,41 +69,43 @@ export default function App() {
   }
 
   return (
-    <LinearGradient
-      colors={['#0F1419', '#1F2A3A', '#0F1419']}
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      locations={[0, 0.5, 1]}
-    >
-      <SafeAreaProvider style={{ backgroundColor: 'transparent', flex: 1 }}>
-        <NavigationContainer theme={{ 
-          dark: true,
-          colors: { 
-            background: 'transparent',
-            primary: '#2D82FF',
-            card: 'transparent',
-            text: '#FFFFFF',
-            border: 'transparent',
-            notification: '#2D82FF'
-          } 
-        }}>
-        <Tab.Navigator
-          initialRouteName="Home"
-          tabBar={(props) => <CustomTabBar {...props} />}
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Tab.Screen name="Quests" component={QuestsScreen} />
-          <Tab.Screen name="Wallet" component={WalletScreen} />
-          <Tab.Screen name="Home" component={ProfileScreen} />
-          <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-          <Tab.Screen name="Friends" component={SocialsScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-      <StatusBar style="light" />
+    <SafeAreaProvider style={{ flex: 1 }}>
+      <LinearGradient
+        colors={['#0F1419', '#1F2A3A', '#0F1419']}
+        style={{ flex: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        locations={[0, 0.5, 1]}
+      >
+        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+          <NavigationContainer theme={{ 
+            dark: true,
+            colors: { 
+              background: 'transparent',
+              primary: '#2D82FF',
+              card: 'transparent',
+              text: '#FFFFFF',
+              border: 'transparent',
+              notification: '#2D82FF'
+            } 
+          }}>
+            <Tab.Navigator
+              initialRouteName="Home"
+              tabBar={(props) => <CustomTabBar {...props} />}
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              <Tab.Screen name="Quests" component={QuestsScreen} />
+              <Tab.Screen name="Wallet" component={WalletScreen} />
+              <Tab.Screen name="Home" component={ProfileScreen} />
+              <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
+              <Tab.Screen name="Friends" component={SocialsScreen} />
+            </Tab.Navigator>
+          </NavigationContainer>
+        </SafeAreaView>
+        <StatusBar style="light" />
+      </LinearGradient>
     </SafeAreaProvider>
-    </LinearGradient>
   );
 }

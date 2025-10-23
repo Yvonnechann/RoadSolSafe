@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   TextInput,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Badge } from '../components/Card';
 import { Button } from '../components/Button';
 import { theme } from '../styles/theme';
+import { fonts } from '../styles/fonts';
+import { ProfilePicture, ProfilePictureType } from '../components/ProfilePicture';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -26,6 +29,7 @@ interface Friend {
   streakDays: number;
   isOnline: boolean;
   lastActive: string;
+  character: ProfilePictureType;
 }
 
 interface Activity {
@@ -52,6 +56,7 @@ export const SocialsScreen: React.FC = () => {
       streakDays: 45,
       isOnline: true,
       lastActive: '2 min ago',
+      character: 'cat',
     },
     {
       id: '2',
@@ -62,6 +67,7 @@ export const SocialsScreen: React.FC = () => {
       streakDays: 38,
       isOnline: true,
       lastActive: '5 min ago',
+      character: 'robot',
     },
     {
       id: '3',
@@ -72,6 +78,7 @@ export const SocialsScreen: React.FC = () => {
       streakDays: 32,
       isOnline: false,
       lastActive: '1 hour ago',
+      character: 'robot2',
     },
     {
       id: '4',
@@ -82,6 +89,7 @@ export const SocialsScreen: React.FC = () => {
       streakDays: 28,
       isOnline: false,
       lastActive: '3 hours ago',
+      character: 'fox',
     },
   ];
 
@@ -145,7 +153,7 @@ export const SocialsScreen: React.FC = () => {
       <Card style={styles.friendCard}>
         <View style={styles.friendHeader}>
           <View style={styles.friendAvatar}>
-            <Ionicons name="person" size={24} color={theme.colors.text} />
+            <ProfilePicture type={friend.character} size={48} />
             {friend.isOnline && <View style={styles.onlineIndicator} />}
           </View>
           <View style={styles.friendInfo}>
@@ -392,7 +400,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
     marginBottom: theme.spacing.lg,
   },
   headerStats: {
@@ -406,7 +414,7 @@ const styles = StyleSheet.create({
   headerStatValue: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
   },
   headerStatLabel: {
     color: 'rgba(255, 255, 255, 0.8)',
@@ -459,7 +467,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
     marginBottom: theme.spacing.xs,
   },
   sectionSubtitle: {
@@ -506,7 +514,7 @@ const styles = StyleSheet.create({
   friendName: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontWeight: '600',
     marginBottom: theme.spacing.xs,
   },
   friendLastActive: {
@@ -527,7 +535,7 @@ const styles = StyleSheet.create({
   friendStatValue: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
   },
   friendStatLabel: {
     color: theme.colors.textSecondary,
@@ -550,16 +558,18 @@ const styles = StyleSheet.create({
   totalPointsValue: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
   },
 
   // Activity styles
   activitiesList: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   activityItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    paddingVertical: theme.spacing.sm,
+    minHeight: 60,
   },
   activityIcon: {
     width: 32,
@@ -568,32 +578,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.md,
+    marginTop: 2,
   },
   activityContent: {
     flex: 1,
+    paddingRight: theme.spacing.sm,
+    minHeight: 50,
   },
   activityText: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.sm,
-    lineHeight: theme.typography.lineHeight.relaxed,
-    marginBottom: theme.spacing.xs,
+    lineHeight: 20,
+    marginBottom: theme.spacing.sm,
+    flexWrap: 'wrap',
+    flex: 1,
   },
   activityFriendName: {
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontWeight: '600',
   },
   activityFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: theme.spacing.xs,
   },
   activityTimestamp: {
     color: theme.colors.textSecondary,
     fontSize: theme.typography.fontSize.xs,
+    flex: 1,
   },
   activityPoints: {
     color: '#000000',
     fontSize: theme.typography.fontSize.xs,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
   },
 
   // Invite styles
@@ -604,7 +621,7 @@ const styles = StyleSheet.create({
   inviteTitle: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.sm,
   },
@@ -628,7 +645,7 @@ const styles = StyleSheet.create({
   friendCode: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
@@ -666,7 +683,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: theme.colors.text,
     fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: 'bold',
   },
   modalDescription: {
     color: theme.colors.textSecondary,
