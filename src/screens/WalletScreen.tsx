@@ -14,13 +14,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../styles/theme';
 import { fonts } from '../styles/fonts';
 import GradientText from '../components/GradientText';
+import { DEV_WALLET } from '../config/devWallet';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function WalletScreen() {
   // Wallet connection state
   const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   // Sample wallet data
   const walletData = {
@@ -85,9 +86,19 @@ export default function WalletScreen() {
     },
   ];
 
-  const copyAddress = () => {
-    // Implement copy address functionality
-    console.log('Copy address clicked');
+  const copyAddress = async () => {
+    try {
+      // Best-effort copy support for web; native requires expo-clipboard or RN Clipboard.
+      // Avoid adding deps here: provide graceful fallback.
+      if (typeof navigator !== 'undefined' && (navigator as any).clipboard?.writeText && walletAddress) {
+        await (navigator as any).clipboard.writeText(walletAddress);
+        Alert.alert('Copied', 'Wallet address copied to clipboard');
+      } else if (walletAddress) {
+        Alert.alert('Wallet Address', walletAddress);
+      }
+    } catch (e) {
+      Alert.alert('Copy Failed', 'Unable to copy the wallet address.');
+    }
   };
 
   const formatTransactionDate = (timestamp: string) => {
@@ -119,42 +130,14 @@ export default function WalletScreen() {
     }
   };
 
-  const connectPhantomWallet = async () => {
-    try {
-      // Check if Phantom wallet is installed
-      const phantomUrl = 'https://phantom.app/ul/browse/https://roadsolsafe.com';
-      
-      // For mobile, we'll open the Phantom app or redirect to install
-      const canOpen = await Linking.canOpenURL('phantom://');
-      
-      if (canOpen) {
-        // Open Phantom app
-        await Linking.openURL('phantom://');
-      } else {
-        // Show alert to install Phantom
-        Alert.alert(
-          'Phantom Wallet Required',
-          'Please install Phantom wallet to connect your Solana wallet.',
-          [
-            {
-              text: 'Install Phantom',
-              onPress: () => Linking.openURL('https://phantom.app/download'),
-            },
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('Error connecting to Phantom wallet:', error);
-      Alert.alert(
-        'Connection Error',
-        'Failed to connect to Phantom wallet. Please try again.',
-        [{ text: 'OK' }]
-      );
-    }
+  const connectDevWallet = async () => {
+    // Dev-mode: set provided devnet wallet and mark as connected.
+    setWalletAddress(DEV_WALLET.publicKey);
+    setIsWalletConnected(true);
+    Alert.alert(
+      'Wallet Connected',
+      `${DEV_WALLET.label} on ${DEV_WALLET.network} (token: ${DEV_WALLET.token})`,
+    );
   };
 
   return (
@@ -165,7 +148,7 @@ export default function WalletScreen() {
           <Text style={styles.headerTitle}>Wallet</Text>
           <Text style={styles.headerSubtitle}>Manage your USDT rewards</Text>
         </View>
-        <TouchableOpacity style={styles.headerRight} onPress={connectPhantomWallet}>
+        <TouchableOpacity style={styles.headerRight} onPress={connectDevWallet}>
           <Ionicons name="wallet" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
@@ -176,7 +159,9 @@ export default function WalletScreen() {
           <View style={styles.balanceIcon}>
             <Text style={styles.usdtSymbol}>₮</Text>
           </View>
-          <Text style={styles.balanceLabel}>USDT Balance</Text>
+          <Text style={styles.balanceLabel}>
+            {isWalletConnected ? `${DEV_WALLET.token} Balance` : 'Connect Wallet'}
+          </Text>
           <TouchableOpacity style={styles.copyButton} onPress={copyAddress}>
             <Ionicons name="copy-outline" size={16} color="#FFFFFF" />
             <Text style={styles.copyText}>Copy Address</Text>
@@ -188,9 +173,18 @@ export default function WalletScreen() {
           style={{alignSelf: 'flex-start'}}
           textStyle={styles.balanceAmount}
         >
-          {walletData.usdtBalance.toFixed(2)} USDT
+          {walletData.usdtBalance.toFixed(2)} {isWalletConnected ? DEV_WALLET.token : 'USDT'}
         </GradientText>
-        <Text style={styles.totalEarned}>Total earned: {walletData.totalEarned.toFixed(2)} USDT</Text>
+        <Text style={styles.totalEarned}>
+          {isWalletConnected
+            ? `Network: ${DEV_WALLET.network}  •  Token: ${DEV_WALLET.token}`
+            : `Total earned: ${walletData.totalEarned.toFixed(2)} USDT`}
+        </Text>
+        {isWalletConnected && (
+          <Text style={styles.totalEarned}>
+            Address: {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
+          </Text>
+        )}
       </View>
 
       {/* Points and Rank Row */}

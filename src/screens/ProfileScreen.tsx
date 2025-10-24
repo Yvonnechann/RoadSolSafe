@@ -10,6 +10,7 @@ import TripSummaryModal from "../components/TripSummaryModal";
 import LocationSearchService, { LocationSuggestion } from "../services/LocationSearchService";
 import { fonts } from "../styles/fonts";
 import { theme } from "../styles/theme";
+import { getRecommendation } from "../services/DrivingCoach";
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -88,7 +89,7 @@ export default function ProfileScreen() {
         speeding: 0,
         phoneUse: 0,
       },
-      recommendation: "Excellent driving! Keep maintaining this smooth and safe driving style.",
+      recommendation: getRecommendation({ hardBrake: 0, hardAccel: 1, harshTurn: 0, speeding: 0, phoneUse: 0 }, 7.8),
     },
     {
       id: "2",
@@ -125,7 +126,7 @@ export default function ProfileScreen() {
         speeding: 2,
         phoneUse: 1,
       },
-      recommendation: "Good overall driving! Try to avoid sudden braking and watch your speed limits.",
+      recommendation: getRecommendation({ hardBrake: 2, hardAccel: 2, harshTurn: 0, speeding: 2, phoneUse: 1 }, 6.4),
     },
     {
       id: "3",
@@ -163,7 +164,7 @@ export default function ProfileScreen() {
         speeding: 1,
         phoneUse: 2,
       },
-      recommendation: "Outstanding performance! You're setting a great example for safe driving.",
+      recommendation: getRecommendation({ hardBrake: 0, hardAccel: 0, harshTurn: 0, speeding: 1, phoneUse: 2 }, 8.5),
     },
   ];
 

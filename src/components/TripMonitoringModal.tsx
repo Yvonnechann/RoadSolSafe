@@ -11,6 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fonts } from '../styles/fonts';
+import { generateMockTripData } from '../services/TripMockService';
+import { getRecommendation } from '../services/DrivingCoach';
 
 interface TripMonitoringModalProps {
   visible: boolean;
@@ -66,6 +68,16 @@ export default function TripMonitoringModal({
   });
 
   const handleEndTrip = () => {
+    const mock = generateMockTripData();
+    const recommendation = getRecommendation(mock.events, mock.score);
+    setTripData({
+      score: mock.score,
+      points: mock.points,
+      duration: mock.duration,
+      distance: mock.distance,
+      events: mock.events,
+      recommendation,
+    });
     setShowCompletion(true);
   };
 
